@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10233e">
+    <meta name="description" content="DEMURVIA interface demonstration using synthetic data only.">
+    <title>DEMURVIA — UI Demo / Synthetic Data</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./demo-data.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <button class="mobile-scrim" id="mobile-scrim" type="button" data-action="close-nav" aria-label="Close navigation" hidden></button>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+        <div class="brand-row">
+          <a class="brand" href="#/dashboard" data-route="dashboard" aria-label="DEMURVIA dashboard">
+            <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+              <rect width="64" height="64" rx="15" fill="#f0c95b"></rect>
+              <path d="M14 42c10-2 18-8 23-19 2 8 6 13 13 16M16 47h34M32 14v13" fill="none" stroke="#153746" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="brand-word">DEMURVIA</span>
+          </a>
+          <button class="icon-button sidebar-close" type="button" data-action="close-nav" aria-label="Close navigation" data-testid="button-close-navigation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          </button>
+        </div>
+        <div class="demo-chip"><span class="demo-dot"></span> UI DEMO <span class="chip-divider">/</span> SYNTHETIC DATA</div>
+        <div class="workspace-switch">
+          <span class="workspace-initial">D</span>
+          <span class="workspace-copy"><small>DEMO WORKSPACE</small><strong>Meridian Claims Desk</strong></span>
+          <span class="workspace-caret" aria-hidden="true">⌄</span>
+        </div>
+        <nav class="nav-list" aria-label="Demo pages">
+          <p class="nav-caption">CLAIMS OPERATIONS</p>
+          <a href="#/dashboard" data-route="dashboard" data-testid="nav-dashboard"><span class="nav-icon" data-icon="dashboard"></span><span>Dashboard</span></a>
+          <a href="#/claims" data-route="claims" data-testid="nav-claims"><span class="nav-icon" data-icon="claims"></span><span>Claims Management</span><span class="nav-count">04</span></a>
+          <a href="#/command-center" data-route="command-center" data-testid="nav-command-center"><span class="nav-icon" data-icon="command"></span><span>Claim Command Center</span></a>
+          <a href="#/documents" data-route="documents" data-testid="nav-documents"><span class="nav-icon" data-icon="documents"></span><span>Documents Workspace</span></a>
+          <a href="#/extraction" data-route="extraction" data-testid="nav-extraction"><span class="nav-icon" data-icon="extraction"></span><span>Extraction Workspace</span></a>
+          <p class="nav-caption nav-caption-spaced">CLAIM ANALYSIS</p>
+          <a href="#/contract-terms" data-route="contract-terms" data-testid="nav-contract-terms"><span class="nav-icon" data-icon="terms"></span><span>Contract Terms</span></a>
+          <a href="#/laytime-calculation" data-route="laytime-calculation" data-testid="nav-laytime-calculation"><span class="nav-icon" data-icon="calculation"></span><span>Laytime Calculation</span></a>
+          <a href="#/analytics" data-route="analytics" data-testid="nav-analytics"><span class="nav-icon" data-icon="analytics"></span><span>Analytics</span></a>
+          <p class="nav-caption nav-caption-spaced">WORK MANAGEMENT</p>
+          <a href="#/deadlines-tasks" data-route="deadlines-tasks" data-testid="nav-deadlines-tasks"><span class="nav-icon" data-icon="tasks"></span><span>Deadlines &amp; Tasks</span><span class="nav-count nav-count-muted">03</span></a>
+          <p class="nav-caption nav-caption-spaced">ADMINISTRATION</p>
+          <a href="#/settings" data-route="settings" data-testid="nav-settings"><span class="nav-icon" data-icon="settings"></span><span>Settings</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="local-status"><span class="status-pulse"></span><span><strong>Local demo</strong><small>No connected services</small></span></div>
+          <div class="profile-row">
+            <span class="avatar">EW</span>
+            <span class="profile-copy"><strong>Elena Ward</strong><small>Sample operator</small></span>
+            <span class="profile-menu" aria-hidden="true">•••</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-column">
+        <header class="topbar">
+          <button class="icon-button menu-button" id="menu-button" type="button" data-action="toggle-nav" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar" data-testid="button-open-navigation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+          </button>
+          <div class="breadcrumb"><span>Meridian Claims Desk</span><span class="breadcrumb-separator">/</span><strong id="current-page-label">Dashboard</strong></div>
+          <div class="topbar-right">
+            <span class="topbar-demo"><span class="demo-dot"></span> DEMO MODE</span>
+            <button class="icon-button notification-button" type="button" aria-label="Demo notifications" data-testid="button-demo-notifications">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
+              <span class="notification-dot"></span>
+            </button>
+            <span class="topbar-avatar" aria-label="Sample operator">EW</span>
+          </div>
+        </header>
+        <div class="page-wrap">
+          <div class="synthetic-banner" role="note" data-testid="synthetic-data-banner">
+            <span class="banner-mark" aria-hidden="true">i</span>
+            <span><strong>DEMURVIA — UI DEMO / SYNTHETIC DATA</strong><small>Fictional examples only. All financial figures and contract terms are illustrative.</small></span>
+            <span class="banner-tag">SESSION ONLY</span>
+          </div>
+          <section id="page" class="page-content" aria-live="polite"></section>
+          <footer class="page-footer">
+            <span>DEMURVIA interface preview</span>
+            <span>Fictional data · No business records are saved</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
