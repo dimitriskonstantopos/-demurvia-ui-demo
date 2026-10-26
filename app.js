@@ -3,6 +3,8 @@
 
   const data = window.DEMURVIA_DEMO_DATA;
   const page = document.getElementById("page");
+  const demoProfileName = data.operator;
+  const demoProfileInitials = demoProfileName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const state = {
     activeClaimId: data.claims[0].id,
     commandTab: "overview",
@@ -15,7 +17,21 @@
     showFinancials: true,
     compactMode: false,
     navOpen: false,
+    notificationsOpen: false,
+    profileMenuOpen: false,
   };
+  const demoNotifications = [
+    {
+      title: "Sample document ready for review",
+      detail: `${data.documents[0].name} · ${data.claims.find((claim) => claim.id === data.documents[0].claimId)?.id ?? "Synthetic claim"}`,
+      time: data.documents[0].received,
+    },
+    {
+      title: "Fictional claim updated",
+      detail: `${data.claims[1].vessel} · ${data.claims[1].id}`,
+      time: data.claims[1].updated,
+    },
+  ];
 
   const pageNames = {
     dashboard: "Dashboard",
@@ -81,7 +97,7 @@
 
   function claimRows(claims) {
     return claims.map((claim) => `
-      <tr data-filter-row="claims" data-search-text="${esc(`${claim.id} ${claim.vessel} ${claim.voyage} ${claim.counterparty} ${claim.port} ${claim.status}`.toLowerCase())}" data-status="${esc(claim.status)}">
+      <tr data-filter-row="claims" data-search-text="${esc(`${claim.id} ${claim.reference} ${claim.vessel} ${claim.voyage} ${claim.counterparty} ${claim.port} ${claim.status}`.toLowerCase())}" data-status="${esc(claim.status)}">
         <td><a class="claim-link" href="#/command-center" data-route="command-center" data-select-claim="${esc(claim.id)}" data-testid="link-claim-${esc(claim.id)}">${claimName(claim)}</a></td>
         <td>${esc(claim.counterparty)}</td>
         <td>${esc(claim.port)}</td>
@@ -91,6 +107,25 @@
       </tr>`).join("");
   }
 
+  function claimCards(claims) {
+    return claims.map((claim) => `
+      <article class="claim-card" data-filter-row="claims" data-search-text="${esc(`${claim.id} ${claim.reference} ${claim.vessel} ${claim.voyage} ${claim.counterparty} ${claim.port} ${claim.status}`.toLowerCase())}" data-status="${esc(claim.status)}" data-testid="claim-card-${esc(claim.id)}">
+        <div class="claim-card-heading">
+          <div><a class="claim-card-vessel" href="#/command-center" data-route="command-center" data-select-claim="${esc(claim.id)}">${esc(claim.vessel)}</a><span class="claim-card-reference">Claim reference · ${esc(claim.reference)}</span></div>
+          ${status(claim.status)}
+        </div>
+        <dl class="claim-card-details">
+          <div><dt>Claim ID</dt><dd>${esc(claim.id)}</dd></div>
+          <div><dt>Voyage</dt><dd>${esc(claim.voyage)}</dd></div>
+          <div><dt>Counterparty</dt><dd>${esc(claim.counterparty)}</dd></div>
+          <div><dt>Port / terminal</dt><dd>${esc(claim.port)}</dd></div>
+          <div><dt>Updated</dt><dd>${esc(claim.updated)}</dd></div>
+          <div><dt>Illustrative amount</dt><dd>${money(claim.illustrativeAmount, claim.currency)}</dd></div>
+        </dl>
+        <a class="button button-small claim-card-open" href="#/command-center" data-route="command-center" data-select-claim="${esc(claim.id)}" data-testid="button-open-claim-${esc(claim.id)}">Open claim ${icon("arrow")}</a>
+      </article>`).join("");
+  }
+
   function claimsTable(claims, includeFilters = false) {
     const controls = includeFilters
       ? `<div class="table-tools"><label class="search-field">${icon("search")}<input type="search" placeholder="Search claims" aria-label="Search claims" data-search="claims" data-testid="input-search-claims"></label><label class="select-field"><span class="inline-label">Status</span><select aria-label="Filter claims by status" data-status-filter="claims" data-testid="select-claim-status"><option value="">All statuses</option><option>In review</option><option>Documents needed</option><option>Ready to review</option><option>Draft</option></select></label></div>`
@@ -98,6 +133,7 @@
     return `<section class="panel" data-filter-scope="claims">
       ${panelHeading("Claims register", includeFilters ? "Four fictional examples" : "Recently updated synthetic examples", controls)}
       <div class="table-scroll"><table><thead><tr><th>Vessel / claim</th><th>Counterparty</th><th>Port / terminal</th><th>Status</th><th>Updated</th><th>Illustrative amount</th></tr></thead><tbody>${claimRows(claims)}</tbody></table></div>
+      <div class="claim-card-list" aria-label="Claims register cards">${claimCards(claims)}</div>
       <div class="empty-state" data-empty-for="claims">No sample claims match these filters.</div>
     </section>`;
   }
@@ -157,7 +193,7 @@
     const events = eventsFor(claimId);
     if (!events.length) return `<div class="session-note">No synthetic events are attached to this example.</div>`;
     const selected = Math.min(state.timelineIndex, events.length - 1);
-    return `${interactive ? `<div class="section-title-row"><div><h2>Sample voyage timeline</h2><p>Use the controls to move through fictional event entries.</p></div><div class="heading-actions"><button class="button button-small button-icon" type="button" data-action="timeline-step" data-direction="-1" aria-label="Previous timeline event" data-testid="button-timeline-previous">${icon("close")}</button><button class="button button-small button-icon" type="button" data-action="timeline-step" data-direction="1" aria-label="Next timeline event" data-testid="button-timeline-next">${icon("arrow")}</button></div></div>` : ""}
+    return `${interactive ? `<div class="section-title-row timeline-heading"><div class="timeline-heading-copy"><h2>Sample voyage timeline</h2><p>Use the controls to move through fictional event entries.</p></div><div class="timeline-controls"><button class="button button-small button-icon" type="button" data-action="timeline-step" data-direction="-1" aria-label="Previous timeline event" data-testid="button-timeline-previous">${icon("arrow")}</button><button class="button button-small button-icon" type="button" data-action="timeline-step" data-direction="1" aria-label="Next timeline event" data-testid="button-timeline-next">${icon("arrow")}</button></div></div>` : ""}
       <div class="timeline">${events.map((event, index) => `
         <article class="timeline-item ${index === selected ? "timeline-selected" : ""}" data-testid="timeline-event-${index + 1}">
           <time class="timeline-time">${esc(event.time)}</time><span class="timeline-track"><span class="timeline-dot"></span></span>
@@ -190,6 +226,7 @@
 
   function renderCommandCenter() {
     const claim = activeClaim();
+    const calculation = calcFor(claim.id);
     let tabContent = "";
     if (state.commandTab === "timeline") tabContent = timelineFor(claim.id, true);
     else if (state.commandTab === "documents") tabContent = documentRows(docsFor(claim.id));
@@ -197,7 +234,15 @@
     return `${title("CLAIMS OPERATIONS", "Claim Command Center", "Explore a fictional claim overview, synthetic timeline, and sample documents.")}
       ${note("This command center is a visual example only. It does not determine authority, eligibility, or claim readiness.")}
       <div class="claim-select-row"><label class="field-control"><span class="inline-label">Choose a sample claim</span><select data-claim-select aria-label="Choose sample claim" data-testid="select-active-claim">${data.claims.map((item) => `<option value="${esc(item.id)}" ${item.id === claim.id ? "selected" : ""}>${esc(item.id)} · ${esc(item.vessel)}</option>`).join("")}</select></label>${status(claim.status)}</div>
-      <section class="panel">${panelHeading(`${esc(claim.id)} · ${esc(claim.vessel)}`, `${esc(claim.port)} · Updated ${esc(claim.updated)}`)}<div class="panel-body">${commandTabs()}<div class="tab-content">${tabContent}</div></div></section>`;
+      <section class="panel command-center-desktop">${panelHeading(`${esc(claim.id)} · ${esc(claim.vessel)}`, `${esc(claim.port)} · Updated ${esc(claim.updated)}`)}<div class="panel-body">${commandTabs()}<div class="tab-content">${tabContent}</div></div></section>
+      <div class="command-center-mobile-stack" aria-label="Claim details">
+        <section class="panel">${panelHeading("Claim overview", `${esc(claim.id)} · ${esc(claim.vessel)}`)}<div class="panel-body">${detailTiles(claim)}<details class="expand-card"><summary>Show fictional source notes</summary><p>Every vessel, counterparty, location, timestamp, term, and value on this screen is synthetic. These entries do not establish event validity or contractual authority.</p></details></div></section>
+        <section class="panel">${panelHeading("Voyage timeline", `${esc(claim.vessel)} · synthetic events`)}<div class="panel-body">${timelineFor(claim.id, true)}</div></section>
+        <section class="panel">${panelHeading("Illustrative calculation", "Synthetic example only")}<div class="panel-body">${calculation
+          ? `<div class="result-card"><div class="result-kicker">${esc(calculation.resultLabel)}</div><div class="result-value">${money(calculation.result, calculation.currency)}</div><div class="result-caption">Illustrative value · not an authoritative result</div></div><div class="session-note">No calculation engine or claim decision is available in this static demo.</div>`
+          : `<p class="panel-subtitle">No calculation example is attached to this fictional claim.</p>`}</div></section>
+        <section class="panel">${panelHeading("Supporting documents", "Fictional sample records")}<div class="panel-body">${documentRows(docsFor(claim.id))}</div></section>
+      </div>`;
   }
 
   function renderDocuments() {
@@ -292,8 +337,8 @@
         ${metric("Period selected", esc(period.label), "Filter runs locally", "calculation")}
       </div>
       <div class="grid split-grid">
-        <section class="panel">${panelHeading("Illustrative claim value", `${esc(period.label)} · synthetic buckets`)}<div class="panel-body"><div class="chart-area" role="img" aria-label="Bar chart of illustrative values">
-          ${period.months.map((item, index) => `<div class="chart-row" data-testid="chart-bar-${index + 1}"><span class="chart-label">${esc(item.label)}</span><span class="chart-track"><span class="chart-fill" style="width:${Math.max(3, (item.value / max) * 100)}%"></span></span><strong class="chart-value">${money(item.value)}</strong></div>`).join("")}
+        <section class="panel">${panelHeading("Illustrative claim value", `${esc(period.label)} · synthetic buckets`)}<div class="panel-body"><div class="chart-area" role="list" aria-label="Illustrative synthetic values for ${esc(period.label)}. Bar lengths are proportional to each displayed value.">
+          ${period.months.map((item, index) => `<div class="chart-row" role="listitem" aria-label="${esc(item.label)}: ${esc(money(item.value))}" data-testid="chart-bar-${index + 1}"><span class="chart-label">${esc(item.label)}</span><span class="chart-track" aria-hidden="true"><span class="chart-fill" style="width:${max > 0 ? (item.value / max) * 100 : 0}%"></span></span><strong class="chart-value">${money(item.value)}</strong></div>`).join("")}
         </div><p class="panel-subtitle">Bar widths compare synthetic sample figures only.</p></div></section>
         <section class="panel">${panelHeading("Status mix", "Synthetic example counts")}<div class="panel-body">
           ${[
@@ -384,8 +429,45 @@
     toastTimer = setTimeout(() => { region.innerHTML = ""; }, 2600);
   }
 
+  function syncDemoProfile() {
+    document.querySelectorAll("[data-demo-profile-name]").forEach((element) => { element.textContent = demoProfileName; });
+    document.querySelectorAll("[data-demo-profile-initials]").forEach((element) => { element.textContent = demoProfileInitials; });
+    document.querySelector(".topbar-avatar")?.setAttribute("aria-label", `Fictional demo profile: ${demoProfileName} (${demoProfileInitials})`);
+    document.querySelector(".profile-menu-button")?.setAttribute("aria-label", `Open fictional demo profile menu for ${demoProfileName}`);
+  }
+
+  function populateNotifications() {
+    const list = document.getElementById("notification-list");
+    if (!list) return;
+    list.innerHTML = demoNotifications.length
+      ? `<ul>${demoNotifications.map((item) => `<li class="notification-item"><span class="notification-item-mark" aria-hidden="true"></span><span class="notification-item-copy"><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small><time>${esc(item.time)}</time></span></li>`).join("")}</ul><div class="notification-footer"><button class="button button-small" type="button" data-action="dismiss-notifications" data-testid="button-dismiss-notifications">Dismiss sample notifications</button><small>Resets on refresh · no real notifications</small></div>`
+      : `<p class="notification-empty" role="status">There are no new synthetic notifications. Refresh to restore the examples.</p>`;
+    document.querySelector(".notification-dot").hidden = !demoNotifications.length;
+  }
+
+  function setNotificationsOpen(open, restoreFocus = false) {
+    state.notificationsOpen = open;
+    const trigger = document.getElementById("notification-button");
+    const popover = document.getElementById("notification-popover");
+    trigger.setAttribute("aria-expanded", String(open));
+    popover.hidden = !open;
+    if (open) document.querySelector(".popover-close")?.focus();
+    else if (restoreFocus) trigger.focus();
+  }
+
+  function setProfileMenuOpen(open, restoreFocus = false) {
+    state.profileMenuOpen = open;
+    const trigger = document.querySelector(".profile-menu-button");
+    const popover = document.getElementById("profile-menu");
+    trigger.setAttribute("aria-expanded", String(open));
+    popover.hidden = !open;
+    if (open) popover.querySelector('[role="menuitem"]')?.focus();
+    else if (restoreFocus) trigger.focus();
+  }
+
   function render() {
     const route = currentRoute();
+    const focusedTestId = page.contains(document.activeElement) ? document.activeElement.dataset.testid : null;
     page.innerHTML = pageRenderers[route]();
     document.getElementById("current-page-label").textContent = pageNames[route];
     document.title = `DEMURVIA — ${pageNames[route]} · UI Demo`;
@@ -397,14 +479,23 @@
     syncMobileNavigation();
     applyFilters("claims");
     applyFilters("documents");
+    if (focusedTestId) {
+      [...page.querySelectorAll("[data-testid]")].find((element) =>
+        element.dataset.testid === focusedTestId && element.getClientRects().length
+      )?.focus({ preventScroll: true });
+    }
   }
 
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
+    if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
     const routeLink = target.closest("[data-route]");
     if (routeLink) {
       if (routeLink.dataset.selectClaim) state.activeClaimId = routeLink.dataset.selectClaim;
+      setNotificationsOpen(false);
+      setProfileMenuOpen(false);
       state.navOpen = false;
       syncMobileNavigation();
       if (routeLink.getAttribute("href") === window.location.hash) render();
@@ -417,6 +508,26 @@
           state.navOpen = !state.navOpen;
           syncMobileNavigation();
           if (state.navOpen) document.querySelector("#sidebar [data-route]")?.focus();
+          break;
+        case "toggle-notifications":
+          setProfileMenuOpen(false);
+          setNotificationsOpen(!state.notificationsOpen);
+          break;
+        case "close-notifications":
+          setNotificationsOpen(false, true);
+          break;
+        case "dismiss-notifications":
+          demoNotifications.splice(0);
+          populateNotifications();
+          document.querySelector(".popover-close").focus();
+          break;
+        case "toggle-profile-menu":
+          setNotificationsOpen(false);
+          setProfileMenuOpen(!state.profileMenuOpen);
+          break;
+        case "profile-details":
+          setProfileMenuOpen(false, true);
+          toast(`${demoProfileName} (${demoProfileInitials}) is a fictional sample operator. No authentication is configured.`);
           break;
         case "close-nav":
           state.navOpen = false;
@@ -495,12 +606,36 @@
     if (target?.matches("[data-search]")) applyFilters(target.dataset.search);
   });
 
+  document.addEventListener("focusin", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
+    if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
+  });
+
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.navOpen) {
-      state.navOpen = false;
-      syncMobileNavigation();
-      document.getElementById("menu-button").focus();
-      return;
+    if (event.key === "Escape") {
+      if (state.profileMenuOpen) {
+        setProfileMenuOpen(false, true);
+        return;
+      }
+      if (state.notificationsOpen) {
+        setNotificationsOpen(false, true);
+        return;
+      }
+      if (state.navOpen) {
+        state.navOpen = false;
+        syncMobileNavigation();
+        document.getElementById("menu-button").focus();
+        return;
+      }
+    }
+    if (state.profileMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      const items = [...document.querySelectorAll('#profile-menu [role="menuitem"]:not([disabled])')];
+      if (items.length) {
+        event.preventDefault();
+        items[0].focus();
+      }
     }
     if (event.key === "Tab" && state.navOpen && window.matchMedia("(max-width: 900px)").matches) {
       const sidebar = document.getElementById("sidebar");
@@ -527,6 +662,8 @@
     iconElement.innerHTML = icon(iconElement.dataset.icon);
   }
 
+  syncDemoProfile();
+  populateNotifications();
   if (!window.location.hash) window.location.replace("#/dashboard");
   render();
 })();
