@@ -20,6 +20,7 @@
     workspaceMenuOpen: false,
     notificationsOpen: false,
     profileMenuOpen: false,
+    profileMenuSource: "sidebar",
   };
   const demoNotifications = [
     {
@@ -433,8 +434,8 @@
   function syncDemoProfile() {
     document.querySelectorAll("[data-demo-profile-name]").forEach((element) => { element.textContent = demoProfileName; });
     document.querySelectorAll("[data-demo-profile-initials]").forEach((element) => { element.textContent = demoProfileInitials; });
-    document.querySelector(".topbar-avatar")?.setAttribute("aria-label", `Fictional demo profile: ${demoProfileName} (${demoProfileInitials})`);
     document.querySelector(".profile-menu-button")?.setAttribute("aria-label", `Open fictional demo profile menu for ${demoProfileName}`);
+    document.querySelector(".topbar-profile-button")?.setAttribute("aria-label", `Open fictional demo profile menu for ${demoProfileName} (${demoProfileInitials})`);
   }
 
   function populateNotifications() {
@@ -456,24 +457,124 @@
     else if (restoreFocus) trigger.focus();
   }
 
-  function setProfileMenuOpen(open, restoreFocus = false) {
+  function setProfileMenuOpen(open, restoreFocus = false, source = state.profileMenuSource) {
     state.profileMenuOpen = open;
+    if (open) state.profileMenuSource = source;
     const trigger = document.querySelector(".profile-menu-button");
     const popover = document.getElementById("profile-menu");
-    trigger.setAttribute("aria-expanded", String(open));
+    for (const button of document.querySelectorAll('[data-action="toggle-profile-menu"]')) {
+      button.setAttribute("aria-expanded", String(open && button.dataset.profileSource === state.profileMenuSource));
+    }
     popover.hidden = !open;
-    if (open) popover.querySelector('[role="menuitem"]')?.focus();
-    else if (restoreFocus) trigger.focus();
+    if (open) {
+      popover.style.maxHeight = "";
+      positionProfileMenu();
+      popover.querySelector('[role="menuitem"]')?.focus();
+    } else if (restoreFocus) {
+      (state.profileMenuSource === "header" ? document.getElementById("topbar-profile-button") : trigger).focus();
+    }
+  }
+
+  function positionPopover(menu, trigger, preferredSide) {
+    const viewport = window.visualViewport;
+    const viewportWidth = viewport?.width ?? window.innerWidth;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportTop = viewport?.offsetTop ?? 0;
+    const viewportLeft = viewport?.offsetLeft ?? 0;
+    const viewportBottom = viewportTop + viewportHeight;
+    const rect = trigger.getBoundingClientRect();
+    const width = menu.getBoundingClientRect().width;
+    const naturalHeight = menu.scrollHeight;
+    const gap = 8;
+    const inset = 12;
+    const belowSpace = Math.max(0, viewportBottom - rect.bottom - gap - inset);
+    const aboveSpace = Math.max(0, rect.top - viewportTop - gap - inset);
+    const minimumSpace = Math.min(naturalHeight, 160);
+    const above = preferredSide === "above"
+      ? aboveSpace >= minimumSpace || aboveSpace >= belowSpace
+      : belowSpace < minimumSpace && aboveSpace > belowSpace;
+    const available = above ? aboveSpace : belowSpace;
+    const maxHeight = Math.min(naturalHeight, available);
+    const height = Math.min(naturalHeight, maxHeight);
+    const preferredTop = above ? rect.top - height - gap : rect.bottom + gap;
+    const left = Math.max(viewportLeft + inset, Math.min(rect.right - width, viewportLeft + viewportWidth - width - inset));
+    const top = Math.max(viewportTop + inset, Math.min(preferredTop, viewportBottom - height - inset));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.maxHeight = `${maxHeight}px`;
+  }
+
+  function positionProfileMenu() {
+    if (!state.profileMenuOpen) return;
+    const trigger = state.profileMenuSource === "header"
+      ? document.getElementById("topbar-profile-button")
+      : document.querySelector(".profile-menu-button");
+    positionPopover(document.getElementById("profile-menu"), trigger, state.profileMenuSource === "header" ? "below" : "above");
+  }
+
+  function isProfileMenuTarget(target) {
+    return Boolean(target.closest("#profile-menu, .profile-menu-button, .topbar-profile-button"));
+  }
+
+  function toggleProfileMenu(trigger) {
+    setWorkspaceMenuOpen(false);
+    setNotificationsOpen(false);
+    const source = trigger.dataset.profileSource;
+    const open = !(state.profileMenuOpen && state.profileMenuSource === source);
+    setProfileMenuOpen(open, !open, source);
+  }
+
+  document.addEventListener(window.PointerEvent ? "pointerdown" : "touchstart", (event) => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (state.profileMenuOpen && target && !isProfileMenuTarget(target)) setProfileMenuOpen(false);
+  }, { capture: true, passive: true });
+
+  // These persistent buttons live outside #page. Bind directly so activation
+  // does not depend on a touch-generated click reaching the document delegate.
+  for (const trigger of document.querySelectorAll('[data-action="toggle-profile-menu"]')) {
+    let touch = null;
+    let ignoreTouchClickUntil = 0;
+    trigger.addEventListener("touchstart", (event) => {
+      const point = event.touches[0];
+      touch = event.touches.length === 1
+        ? { id: point.identifier, x: point.clientX, y: point.clientY }
+        : null;
+    }, { passive: true });
+    trigger.addEventListener("touchmove", (event) => {
+      const point = [...event.touches].find((item) => item.identifier === touch?.id);
+      if (!point || event.touches.length !== 1 || Math.hypot(point.clientX - touch.x, point.clientY - touch.y) > 10) touch = null;
+    }, { passive: true });
+    trigger.addEventListener("touchcancel", () => { touch = null; }, { passive: true });
+    trigger.addEventListener("touchend", (event) => {
+      const point = [...event.changedTouches].find((item) => item.identifier === touch?.id);
+      const isTap = point && !event.touches.length && Math.hypot(point.clientX - touch.x, point.clientY - touch.y) <= 10;
+      touch = null;
+      if (!isTap) return;
+      // Cancel only a completed single-finger tap, not scrolling or pinching.
+      // The guard also covers engines that still emit a compatibility click.
+      if (event.cancelable) event.preventDefault();
+      ignoreTouchClickUntil = performance.now() + 1000;
+      toggleProfileMenu(trigger);
+    }, { passive: false });
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (event.detail > 0 && performance.now() < ignoreTouchClickUntil) {
+        event.preventDefault();
+        return;
+      }
+      toggleProfileMenu(trigger);
+    });
   }
 
   function positionWorkspaceMenu() {
     if (!state.workspaceMenuOpen) return;
     const trigger = document.getElementById("workspace-switch");
     const menu = document.getElementById("workspace-menu");
-    const viewport = window.visualViewport;
-    const viewportBottom = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
-    const menuTop = trigger.getBoundingClientRect().bottom + 6;
-    menu.style.maxHeight = `${Math.max(0, viewportBottom - menuTop - 12)}px`;
+    positionPopover(menu, trigger, "below");
+  }
+
+  function isWorkspaceMenuTarget(target) {
+    return Boolean(target.closest("#workspace-menu, #workspace-switch"));
   }
 
   function setWorkspaceMenuOpen(open, restoreFocus = false) {
@@ -483,6 +584,7 @@
     trigger.setAttribute("aria-expanded", String(open));
     menu.hidden = !open;
     if (open) {
+      menu.style.maxHeight = "";
       positionWorkspaceMenu();
       menu.querySelector('[role="menuitem"]')?.focus();
     } else {
@@ -527,9 +629,9 @@
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
-    if (state.workspaceMenuOpen && !target.closest(".workspace-menu-wrap")) setWorkspaceMenuOpen(false);
+    if (state.workspaceMenuOpen && !isWorkspaceMenuTarget(target)) setWorkspaceMenuOpen(false);
     if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
-    if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
+    if (state.profileMenuOpen && !isProfileMenuTarget(target)) setProfileMenuOpen(false);
     const routeLink = target.closest("[data-route]");
     if (routeLink) {
       if (routeLink.dataset.selectClaim) state.activeClaimId = routeLink.dataset.selectClaim;
@@ -573,11 +675,6 @@
           demoNotifications.splice(0);
           populateNotifications();
           document.querySelector(".popover-close").focus();
-          break;
-        case "toggle-profile-menu":
-          setWorkspaceMenuOpen(false);
-          setNotificationsOpen(false);
-          setProfileMenuOpen(!state.profileMenuOpen);
           break;
         case "profile-details":
           setProfileMenuOpen(false, true);
@@ -663,9 +760,10 @@
   document.addEventListener("focusin", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
-    if (state.workspaceMenuOpen && !target.closest(".workspace-menu-wrap")) setWorkspaceMenuOpen(false);
+    if (state.workspaceMenuOpen && !isWorkspaceMenuTarget(target)) setWorkspaceMenuOpen(false);
     if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
-    if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
+    // Profile dismissal uses intentional outside clicks and the Tab/Escape
+    // handlers, not focus changes caused by mobile browser activation.
   });
 
   document.addEventListener("keydown", (event) => {
@@ -688,6 +786,29 @@
         document.getElementById("menu-button").focus();
         return;
       }
+    }
+    if (event.key === "Tab" && state.profileMenuOpen) {
+      event.preventDefault();
+      const sidebarOpen = state.navOpen && window.matchMedia("(max-width: 900px)").matches;
+      if (event.shiftKey) {
+        setProfileMenuOpen(false, true);
+      } else {
+        setProfileMenuOpen(false);
+        let next;
+        if (sidebarOpen) {
+          next = [...document.querySelectorAll("#sidebar a[href], #sidebar button:not([disabled])")]
+            .find((element) => element.getClientRects().length);
+        } else {
+          const trigger = state.profileMenuSource === "header"
+            ? document.getElementById("topbar-profile-button")
+            : document.querySelector(".profile-menu-button");
+          const focusable = [...document.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+            .filter((element) => element.getClientRects().length && !element.closest("[inert], [aria-hidden='true']"));
+          next = focusable[focusable.indexOf(trigger) + 1];
+        }
+        next?.focus();
+      }
+      return;
     }
     if (event.key === "ArrowDown" && document.activeElement === document.getElementById("workspace-switch")) {
       event.preventDefault();
@@ -742,10 +863,17 @@
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   window.addEventListener("resize", syncMobileNavigation, { passive: true });
   window.addEventListener("resize", positionWorkspaceMenu, { passive: true });
+  window.addEventListener("resize", positionProfileMenu, { passive: true });
   window.addEventListener("scroll", positionWorkspaceMenu, { passive: true });
-  document.getElementById("sidebar").addEventListener("scroll", () => setWorkspaceMenuOpen(false), { passive: true });
+  window.addEventListener("scroll", positionProfileMenu, { passive: true });
+  document.getElementById("sidebar").addEventListener("scroll", () => {
+    positionWorkspaceMenu();
+    positionProfileMenu();
+  }, { passive: true });
   window.visualViewport?.addEventListener("resize", positionWorkspaceMenu, { passive: true });
   window.visualViewport?.addEventListener("scroll", positionWorkspaceMenu, { passive: true });
+  window.visualViewport?.addEventListener("resize", positionProfileMenu, { passive: true });
+  window.visualViewport?.addEventListener("scroll", positionProfileMenu, { passive: true });
   window.addEventListener("beforeunload", () => clearTimeout(toastTimer), { once: true });
 
   for (const iconElement of document.querySelectorAll(".nav-icon[data-icon]")) {

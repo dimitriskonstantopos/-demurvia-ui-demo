@@ -41,7 +41,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 button, input, select { font: inherit; }
-button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 a { color: inherit; }
 button { color: inherit; }
 :focus-visible { outline: 3px solid rgba(35, 118, 189, .46); outline-offset: 2px; }
@@ -195,6 +195,8 @@ button { color: inherit; }
 .notification-button:hover { color: var(--navy); background: #f5f8fb; }
 .notification-dot { position: absolute; top: 9px; right: 9px; width: 6px; height: 6px; border: 1px solid white; border-radius: 50%; background: #d8a83f; }
 .topbar-avatar { width: 31px; height: 31px; border-color: #d8e2eb; background: #e8f0f6; }
+.topbar-profile-button { width: 40px; height: 40px; padding: 0; color: #173756; cursor: pointer; }
+.topbar-profile-button:hover { border-color: #c8d7e3; background: #f3f7fa; }
 .popover {
   position: absolute;
   z-index: 80;
@@ -225,12 +227,12 @@ button { color: inherit; }
 .notification-footer small { color: #8494a2; font-size: 9px; }
 .profile-menu-button { width: 36px; height: 36px; color: rgba(224, 235, 245, .72); font-size: 13px; letter-spacing: 1px; }
 .profile-menu-button:hover { color: #fff; background: rgba(255, 255, 255, .09); }
-.profile-popover { right: -4px; bottom: calc(100% + 9px); width: min(240px, calc(100vw - 42px)); padding: 13px; }
+.profile-popover { position: fixed; z-index: 90; width: min(240px, calc(100vw - 24px)); padding: 13px; overflow-y: auto; overscroll-behavior: contain; }
 .popover-kicker { margin: 0 0 7px; color: #7890a4; font: 700 8px var(--font-mono); letter-spacing: .12em; }
 .profile-popover > strong { display: block; color: #2c4358; font-size: 11px; }
-.profile-popover > button[role="menuitem"] { display: block; width: 100%; min-height: 38px; margin-top: 12px; padding: 7px 9px; color: #335875; border: 1px solid #e5ecf2; border-radius: 6px; background: #f8fafc; cursor: pointer; font-size: 9px; text-align: left; }
+.profile-popover > button[role="menuitem"] { display: block; width: 100%; min-height: 44px; margin-top: 12px; padding: 7px 9px; color: #335875; border: 1px solid #e5ecf2; border-radius: 6px; background: #f8fafc; cursor: pointer; font-size: 10px; text-align: left; }
 .profile-popover > button[role="menuitem"]:hover { background: #edf4f9; }
-.workspace-popover { position: absolute; z-index: 90; top: calc(100% + 6px); left: 3px; width: calc(100% - 6px); padding: 12px; overflow-y: auto; overscroll-behavior: contain; }
+.workspace-popover { position: fixed; z-index: 90; width: min(280px, calc(100vw - 24px)); padding: 12px; overflow-y: auto; overscroll-behavior: contain; }
 .workspace-current { margin-bottom: 8px; padding: 2px 2px 10px; border-bottom: 1px solid #edf1f5; }
 .workspace-current .popover-kicker { margin-bottom: 6px; }
 .workspace-current strong, .workspace-current small { display: block; overflow-wrap: anywhere; }
@@ -549,7 +551,7 @@ tbody tr:hover td { background: #fbfdff; }
   .topbar-right { gap: 7px; }
   .topbar-demo { display: none; }
   .notification-button { width: 44px; height: 44px; }
-  .topbar-avatar { width: 32px; height: 32px; }
+  .topbar-profile-button { width: 44px; height: 44px; }
   .notification-popover { position: fixed; top: 61px; right: 8px; width: min(360px, calc(100vw - 16px)); }
   .popover-close { width: 44px; height: 44px; }
   .notification-item-copy strong { font-size: 12px; }
@@ -622,7 +624,7 @@ tbody tr:hover td { background: #fbfdff; }
   .claim-select-row { align-items: stretch; flex-direction: column; gap: 8px; }
   .claim-select-row > .status { align-self: flex-start; }
   .profile-menu-button { width: 44px; height: 44px; }
-  .profile-popover { right: -6px; width: min(260px, calc(84vw - 28px)); }
+  .profile-popover { width: min(260px, calc(100vw - 24px)); }
   .workspace-popover [role="menuitem"] { min-height: 44px; font-size: 11px; }
   .workspace-current strong { font-size: 12px; }
   .workspace-current small { font-size: 10px; }
@@ -630,7 +632,6 @@ tbody tr:hover td { background: #fbfdff; }
   .tab-button { min-height: 44px; }
   .button { min-height: 44px; }
   .button-small { min-height: 44px; }
-  .profile-popover > button[role="menuitem"] { min-height: 44px; }
   .profile-popover > button[role="menuitem"] { font-size: 11px; }
   .chart-label { font-size: 10px; }
   .chart-value { font-size: 9px; }

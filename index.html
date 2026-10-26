@@ -34,19 +34,6 @@
             <span class="workspace-copy"><small>DEMO WORKSPACE</small><strong>Meridian Claims Desk</strong></span>
             <span class="workspace-caret" aria-hidden="true">⌄</span>
           </button>
-          <div class="popover workspace-popover" id="workspace-menu" role="menu" aria-label="Fictional workspace menu" hidden>
-            <div class="workspace-current" role="group" aria-labelledby="workspace-current-heading">
-              <p class="popover-kicker" id="workspace-current-heading">CURRENT WORKSPACE</p>
-              <strong>Meridian Claims Desk</strong>
-              <small>Fictional demonstration workspace</small>
-            </div>
-            <a href="#/settings" data-route="settings" role="menuitem" data-testid="menuitem-workspace-settings">Workspace Settings</a>
-            <button type="button" role="menuitem" data-action="workspace-team" data-testid="menuitem-workspace-team">Team Members</button>
-            <button type="button" role="menuitem" data-action="workspace-switch-info" data-testid="menuitem-switch-workspace">Switch Workspace</button>
-            <div class="workspace-menu-message" id="workspace-menu-message" role="group" aria-label="Workspace information" hidden>
-              <p role="status" aria-live="polite"></p>
-            </div>
-          </div>
         </div>
         <nav class="nav-list" aria-label="Demo pages">
           <p class="nav-caption">CLAIMS OPERATIONS</p>
@@ -70,15 +57,9 @@
             <span class="avatar" data-demo-profile-initials aria-hidden="true">EW</span>
             <span class="profile-copy"><strong data-demo-profile-name>Elena Ward</strong><small>Fictional demo profile</small></span>
             <div class="profile-menu-wrap">
-              <button class="icon-button profile-menu-button" type="button" data-action="toggle-profile-menu" aria-label="Open fictional demo profile menu" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" data-testid="button-profile-menu">
+              <button class="icon-button profile-menu-button" type="button" data-action="toggle-profile-menu" data-profile-source="sidebar" aria-label="Open fictional demo profile menu" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" data-testid="button-profile-menu">
                 <span aria-hidden="true">•••</span>
               </button>
-              <div class="popover profile-popover" id="profile-menu" role="menu" aria-label="Fictional demo profile menu" hidden>
-                <p class="popover-kicker">FICTIONAL PROFILE</p>
-                <strong data-demo-profile-name>Elena Ward</strong>
-                <small>Sample operator · no authentication</small>
-                <button type="button" role="menuitem" data-action="profile-details" data-testid="menuitem-profile-details">About this demo profile</button>
-              </div>
             </div>
           </div>
         </div>
@@ -105,7 +86,9 @@
                 <div class="notification-list" id="notification-list"></div>
               </section>
             </div>
-            <span class="topbar-avatar" data-demo-profile-initials role="img" aria-label="Fictional demo profile: Elena Ward (EW)">EW</span>
+            <button class="icon-button topbar-avatar topbar-profile-button" id="topbar-profile-button" type="button" data-action="toggle-profile-menu" data-profile-source="header" aria-label="Open fictional demo profile menu for Elena Ward" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" data-testid="button-header-profile-menu">
+              <span data-demo-profile-initials aria-hidden="true">EW</span>
+            </button>
           </div>
         </header>
         <div class="page-wrap">
@@ -121,6 +104,25 @@
           </footer>
         </div>
       </main>
+    </div>
+    <div class="popover workspace-popover" id="workspace-menu" role="menu" aria-label="Fictional workspace menu" hidden>
+      <div class="workspace-current" role="group" aria-labelledby="workspace-current-heading">
+        <p class="popover-kicker" id="workspace-current-heading">CURRENT WORKSPACE</p>
+        <strong>Meridian Claims Desk</strong>
+        <small>Fictional demonstration workspace</small>
+      </div>
+      <a href="#/settings" data-route="settings" role="menuitem" data-testid="menuitem-workspace-settings">Workspace Settings</a>
+      <button type="button" role="menuitem" data-action="workspace-team" data-testid="menuitem-workspace-team">Team Members</button>
+      <button type="button" role="menuitem" data-action="workspace-switch-info" data-testid="menuitem-switch-workspace">Switch Workspace</button>
+      <div class="workspace-menu-message" id="workspace-menu-message" role="group" aria-label="Workspace information" hidden>
+        <p role="status" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="popover profile-popover" id="profile-menu" role="menu" aria-label="Fictional demo profile menu" hidden>
+      <p class="popover-kicker">FICTIONAL PROFILE</p>
+      <strong data-demo-profile-name>Elena Ward</strong>
+      <small>Sample operator · no authentication</small>
+      <button type="button" role="menuitem" data-action="profile-details" data-testid="menuitem-profile-details">About this demo profile</button>
     </div>
     <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
   </body>
