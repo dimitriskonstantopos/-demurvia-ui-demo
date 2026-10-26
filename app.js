@@ -17,6 +17,7 @@
     showFinancials: true,
     compactMode: false,
     navOpen: false,
+    workspaceMenuOpen: false,
     notificationsOpen: false,
     profileMenuOpen: false,
   };
@@ -465,6 +466,43 @@
     else if (restoreFocus) trigger.focus();
   }
 
+  function positionWorkspaceMenu() {
+    if (!state.workspaceMenuOpen) return;
+    const trigger = document.getElementById("workspace-switch");
+    const menu = document.getElementById("workspace-menu");
+    const viewport = window.visualViewport;
+    const viewportBottom = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+    const menuTop = trigger.getBoundingClientRect().bottom + 6;
+    menu.style.maxHeight = `${Math.max(0, viewportBottom - menuTop - 12)}px`;
+  }
+
+  function setWorkspaceMenuOpen(open, restoreFocus = false) {
+    state.workspaceMenuOpen = open;
+    const trigger = document.getElementById("workspace-switch");
+    const menu = document.getElementById("workspace-menu");
+    trigger.setAttribute("aria-expanded", String(open));
+    menu.hidden = !open;
+    if (open) {
+      positionWorkspaceMenu();
+      menu.querySelector('[role="menuitem"]')?.focus();
+    } else {
+      menu.querySelector(".workspace-menu-message").hidden = true;
+      menu.querySelector(".workspace-menu-message [role='status']").textContent = "";
+      if (restoreFocus) trigger.focus();
+    }
+  }
+
+  function showWorkspaceMessage(message) {
+    const panel = document.getElementById("workspace-menu-message");
+    panel.querySelector('[role="status"]').textContent = message;
+    panel.hidden = false;
+    positionWorkspaceMenu();
+  }
+
+  function resetRouteScroll() {
+    window.scrollTo(0, 0);
+  }
+
   function render() {
     const route = currentRoute();
     const focusedTestId = page.contains(document.activeElement) ? document.activeElement.dataset.testid : null;
@@ -489,6 +527,7 @@
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    if (state.workspaceMenuOpen && !target.closest(".workspace-menu-wrap")) setWorkspaceMenuOpen(false);
     if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
     if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
     const routeLink = target.closest("[data-route]");
@@ -496,8 +535,10 @@
       if (routeLink.dataset.selectClaim) state.activeClaimId = routeLink.dataset.selectClaim;
       setNotificationsOpen(false);
       setProfileMenuOpen(false);
+      setWorkspaceMenuOpen(false);
       state.navOpen = false;
       syncMobileNavigation();
+      resetRouteScroll();
       if (routeLink.getAttribute("href") === window.location.hash) render();
       return;
     }
@@ -509,7 +550,19 @@
           syncMobileNavigation();
           if (state.navOpen) document.querySelector("#sidebar [data-route]")?.focus();
           break;
+        case "toggle-workspace-menu":
+          setNotificationsOpen(false);
+          setProfileMenuOpen(false);
+          setWorkspaceMenuOpen(!state.workspaceMenuOpen);
+          break;
+        case "workspace-team":
+          showWorkspaceMessage("Team membership and permissions are not connected in this static preview.");
+          break;
+        case "workspace-switch-info":
+          showWorkspaceMessage("Only one fictional workspace is available in this static preview.");
+          break;
         case "toggle-notifications":
+          setWorkspaceMenuOpen(false);
           setProfileMenuOpen(false);
           setNotificationsOpen(!state.notificationsOpen);
           break;
@@ -522,6 +575,7 @@
           document.querySelector(".popover-close").focus();
           break;
         case "toggle-profile-menu":
+          setWorkspaceMenuOpen(false);
           setNotificationsOpen(false);
           setProfileMenuOpen(!state.profileMenuOpen);
           break;
@@ -609,12 +663,17 @@
   document.addEventListener("focusin", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    if (state.workspaceMenuOpen && !target.closest(".workspace-menu-wrap")) setWorkspaceMenuOpen(false);
     if (state.notificationsOpen && !target.closest(".notification-wrap")) setNotificationsOpen(false);
     if (state.profileMenuOpen && !target.closest(".profile-menu-wrap")) setProfileMenuOpen(false);
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (state.workspaceMenuOpen) {
+        setWorkspaceMenuOpen(false, true);
+        return;
+      }
       if (state.profileMenuOpen) {
         setProfileMenuOpen(false, true);
         return;
@@ -630,6 +689,28 @@
         return;
       }
     }
+    if (event.key === "ArrowDown" && document.activeElement === document.getElementById("workspace-switch")) {
+      event.preventDefault();
+      if (!state.workspaceMenuOpen) {
+        setNotificationsOpen(false);
+        setProfileMenuOpen(false);
+        setWorkspaceMenuOpen(true);
+      } else {
+        document.querySelector('#workspace-menu [role="menuitem"]')?.focus();
+      }
+      return;
+    }
+    if (state.workspaceMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      const items = [...document.querySelectorAll('#workspace-menu [role="menuitem"]:not([disabled])')];
+      if (items.length) {
+        const current = items.indexOf(document.activeElement);
+        const next = event.key === "Home" ? 0
+          : event.key === "End" ? items.length - 1
+            : (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+        event.preventDefault();
+        items[next].focus();
+      }
+    }
     if (state.profileMenuOpen && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
       const items = [...document.querySelectorAll('#profile-menu [role="menuitem"]:not([disabled])')];
       if (items.length) {
@@ -639,7 +720,9 @@
     }
     if (event.key === "Tab" && state.navOpen && window.matchMedia("(max-width: 900px)").matches) {
       const sidebar = document.getElementById("sidebar");
-      const focusable = [...sidebar.querySelectorAll("a[href], button:not([disabled])")].filter((element) => !element.hidden);
+      const focusable = [...sidebar.querySelectorAll("a[href], button:not([disabled])")].filter((element) =>
+        !element.hidden && element.getClientRects().length
+      );
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
@@ -653,9 +736,16 @@
   });
   window.addEventListener("hashchange", () => {
     state.navOpen = false;
+    resetRouteScroll();
     render();
   });
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   window.addEventListener("resize", syncMobileNavigation, { passive: true });
+  window.addEventListener("resize", positionWorkspaceMenu, { passive: true });
+  window.addEventListener("scroll", positionWorkspaceMenu, { passive: true });
+  document.getElementById("sidebar").addEventListener("scroll", () => setWorkspaceMenuOpen(false), { passive: true });
+  window.visualViewport?.addEventListener("resize", positionWorkspaceMenu, { passive: true });
+  window.visualViewport?.addEventListener("scroll", positionWorkspaceMenu, { passive: true });
   window.addEventListener("beforeunload", () => clearTimeout(toastTimer), { once: true });
 
   for (const iconElement of document.querySelectorAll(".nav-icon[data-icon]")) {
@@ -663,6 +753,7 @@
   }
 
   syncDemoProfile();
+  document.getElementById("workspace-switch").setAttribute("aria-label", "Open fictional demo workspace menu for Meridian Claims Desk");
   populateNotifications();
   if (!window.location.hash) window.location.replace("#/dashboard");
   render();

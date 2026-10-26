@@ -28,10 +28,25 @@
           </button>
         </div>
         <div class="demo-chip"><span class="demo-dot"></span> UI DEMO <span class="chip-divider">/</span> SYNTHETIC DATA</div>
-        <div class="workspace-switch">
-          <span class="workspace-initial">D</span>
-          <span class="workspace-copy"><small>DEMO WORKSPACE</small><strong>Meridian Claims Desk</strong></span>
-          <span class="workspace-caret" aria-hidden="true">⌄</span>
+        <div class="workspace-menu-wrap">
+          <button class="workspace-switch" id="workspace-switch" type="button" data-action="toggle-workspace-menu" aria-label="Open fictional workspace menu" aria-haspopup="menu" aria-expanded="false" aria-controls="workspace-menu" data-testid="button-workspace-menu">
+            <span class="workspace-initial" aria-hidden="true">D</span>
+            <span class="workspace-copy"><small>DEMO WORKSPACE</small><strong>Meridian Claims Desk</strong></span>
+            <span class="workspace-caret" aria-hidden="true">⌄</span>
+          </button>
+          <div class="popover workspace-popover" id="workspace-menu" role="menu" aria-label="Fictional workspace menu" hidden>
+            <div class="workspace-current" role="group" aria-labelledby="workspace-current-heading">
+              <p class="popover-kicker" id="workspace-current-heading">CURRENT WORKSPACE</p>
+              <strong>Meridian Claims Desk</strong>
+              <small>Fictional demonstration workspace</small>
+            </div>
+            <a href="#/settings" data-route="settings" role="menuitem" data-testid="menuitem-workspace-settings">Workspace Settings</a>
+            <button type="button" role="menuitem" data-action="workspace-team" data-testid="menuitem-workspace-team">Team Members</button>
+            <button type="button" role="menuitem" data-action="workspace-switch-info" data-testid="menuitem-switch-workspace">Switch Workspace</button>
+            <div class="workspace-menu-message" id="workspace-menu-message" role="group" aria-label="Workspace information" hidden>
+              <p role="status" aria-live="polite"></p>
+            </div>
+          </div>
         </div>
         <nav class="nav-list" aria-label="Demo pages">
           <p class="nav-caption">CLAIMS OPERATIONS</p>
